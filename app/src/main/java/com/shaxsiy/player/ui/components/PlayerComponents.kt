@@ -1,6 +1,7 @@
 package com.shaxsiy.player.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,6 +31,8 @@ import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -40,17 +43,23 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -70,6 +79,24 @@ fun formatTimeMs(ms: Long): String {
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
     return "%02d:%02d".format(minutes, seconds)
+}
+
+fun formatSleepDurationMinutes(minutes: Int): String {
+    val safeMinutes = minutes.coerceAtLeast(0)
+    return if (safeMinutes >= 60) {
+        "%02d:%02d:00".format(safeMinutes / 60, safeMinutes % 60)
+    } else {
+        "%02d:00".format(safeMinutes)
+    }
+}
+
+fun formatSleepDurationSeconds(seconds: Long): String {
+    val safeSeconds = seconds.coerceAtLeast(0L)
+    return if (safeSeconds >= 3600L) {
+        "%02d:%02d:%02d".format(safeSeconds / 3600L, (safeSeconds / 60L) % 60L, safeSeconds % 60L)
+    } else {
+        "%02d:%02d".format(safeSeconds / 60L, safeSeconds % 60L)
+    }
 }
 
 @Composable
@@ -406,7 +433,7 @@ fun FullPlayerSheet(
                         val timerLabel = when (val t = state.sleepTimer) {
                             is SleepTimerMode.Off -> "Taymer"
                             is SleepTimerMode.EndOfTrack -> "Oxirida"
-                            is SleepTimerMode.Countdown -> formatTimeMs(t.remainingSeconds * 1000L)
+                            is SleepTimerMode.Countdown -> formatSleepDurationSeconds(t.remainingSeconds)
                         }
                         Text(timerLabel, color = TextPrimary)
                     }
@@ -450,50 +477,172 @@ fun FullPlayerSheet(
     }
 
     if (showSleepDialog) {
-        AlertDialog(
-            onDismissRequest = { showSleepDialog = false },
-            containerColor = SurfaceElevated,
-            title = { Text("Uyqu taymeri", color = TextPrimary) },
-            text = {
-                Column {
-                    listOf(15, 30, 45, 60).forEach { min ->
-                        TextButton(
-                            onClick = {
-                                onSetSleepMinutes(min)
-                                showSleepDialog = false
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("$min daqiqa", color = TextPrimary)
-                        }
-                    }
-                    TextButton(
-                        onClick = {
-                            onSetSleepEndOfTrack()
-                            showSleepDialog = false
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Joriy qo‘shiq tugagach", color = AccentGreen)
-                    }
-                    if (state.sleepTimer !is SleepTimerMode.Off) {
-                        TextButton(
-                            onClick = {
-                                onCancelSleep()
-                                showSleepDialog = false
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Taymerni o‘chirish", color = TextSecondary)
-                        }
-                    }
-                }
+        SleepTimerDialog(
+            currentMode = state.sleepTimer,
+            onDismiss = { showSleepDialog = false },
+            onSetSleepMinutes = {
+                onSetSleepMinutes(it)
+                showSleepDialog = false
             },
-            confirmButton = {
-                TextButton(onClick = { showSleepDialog = false }) {
-                    Text("Yopish", color = TextSecondary)
-                }
+            onSetSleepEndOfTrack = {
+                onSetSleepEndOfTrack()
+                showSleepDialog = false
+            },
+            onCancelSleep = {
+                onCancelSleep()
+                showSleepDialog = false
             }
         )
     }
+}
+
+@Composable
+private fun SleepTimerDialog(
+    currentMode: SleepTimerMode,
+    onDismiss: () -> Unit,
+    onSetSleepMinutes: (Int) -> Unit,
+    onSetSleepEndOfTrack: () -> Unit,
+    onCancelSleep: () -> Unit
+) {
+    val initialMinutes = when (currentMode) {
+        is SleepTimerMode.Countdown -> ((currentMode.remainingSeconds + 59L) / 60L).toInt()
+        else -> 30
+    }.coerceIn(5, 225)
+    var selectedMinutes by remember(currentMode) { mutableIntStateOf(initialMinutes) }
+    var endOfTrack by remember(currentMode) { mutableStateOf(currentMode is SleepTimerMode.EndOfTrack) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF151515),
+        title = {
+            Text(
+                text = "Uyqu taymeri",
+                color = TextPrimary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Trek yoki epizod oxiri", color = TextPrimary, fontSize = 15.sp)
+                    Switch(
+                        checked = endOfTrack,
+                        onCheckedChange = { endOfTrack = it }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Box(
+                    modifier = Modifier.size(250.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val stroke = 12.dp.toPx()
+                        val diameter = size.minDimension - stroke
+                        val topLeft = Offset(
+                            (size.width - diameter) / 2f,
+                            (size.height - diameter) / 2f
+                        )
+                        drawArc(
+                            color = SurfaceDark,
+                            startAngle = -90f,
+                            sweepAngle = 360f,
+                            useCenter = false,
+                            topLeft = topLeft,
+                            size = androidx.compose.ui.geometry.Size(diameter, diameter),
+                            style = Stroke(width = stroke, cap = StrokeCap.Round)
+                        )
+                        drawArc(
+                            color = AccentGreen,
+                            startAngle = -90f,
+                            sweepAngle = 360f * selectedMinutes / 225f,
+                            useCenter = false,
+                            topLeft = topLeft,
+                            size = androidx.compose.ui.geometry.Size(diameter, diameter),
+                            style = Stroke(width = stroke, cap = StrokeCap.Round)
+                        )
+                        val angle = Math.toRadians((-90.0 + 360.0 * selectedMinutes / 225.0))
+                        val radius = diameter / 2f
+                        val center = Offset(size.width / 2f, size.height / 2f)
+                        drawCircle(
+                            color = AccentGreen,
+                            radius = 9.dp.toPx(),
+                            center = Offset(
+                                center.x + radius * kotlin.math.cos(angle).toFloat(),
+                                center.y + radius * kotlin.math.sin(angle).toFloat()
+                            )
+                        )
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = formatSleepDurationMinutes(selectedMinutes),
+                            color = TextPrimary,
+                            fontSize = 34.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = if (endOfTrack) "Trek tugagach" else "vaqt bo‘yicha",
+                            color = if (endOfTrack) AccentGreen else TextSecondary,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                Slider(
+                    value = selectedMinutes.toFloat(),
+                    onValueChange = {
+                        selectedMinutes = ((it / 5f).toInt() * 5).coerceIn(5, 225)
+                    },
+                    valueRange = 5f..225f,
+                    steps = 43,
+                    enabled = !endOfTrack,
+                    colors = SliderDefaults.colors(
+                        thumbColor = AccentGreen,
+                        activeTrackColor = AccentGreen,
+                        inactiveTrackColor = SurfaceDark
+                    )
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("00:05:00", color = TextSecondary, fontSize = 11.sp)
+                    Text("03:45:00", color = TextSecondary, fontSize = 11.sp)
+                }
+                if (currentMode !is SleepTimerMode.Off) {
+                    TextButton(onClick = onCancelSleep) {
+                        Text("Taymerni o‘chirish", color = TextSecondary)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (endOfTrack) onSetSleepEndOfTrack() else onSetSleepMinutes(selectedMinutes)
+                },
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = AccentGreen,
+                    contentColor = AmoledBlack
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Boshlash", fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Bekor qilish", color = TextSecondary)
+            }
+        }
+    )
 }
