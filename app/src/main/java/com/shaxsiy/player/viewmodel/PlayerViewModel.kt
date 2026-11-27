@@ -150,11 +150,10 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             if (_playbackState.value.sleepTimer is SleepTimerMode.EndOfTrack &&
-                reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
+                (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO ||
+                    reason == Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT)
             ) {
-                mediaController?.pause()
-                _playbackState.update { it.copy(sleepTimer = SleepTimerMode.Off) }
-                showToast("Uyqu taymeri: qo‘shiq tugadi, pleyer to‘xtatildi")
+                stopAfterSleepTimerTrack()
             }
             mediaController?.let { syncFromController(it) }
             persistCurrentGroupPosition()
@@ -164,7 +163,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
             if (playbackState == Player.STATE_ENDED &&
                 _playbackState.value.sleepTimer is SleepTimerMode.EndOfTrack
             ) {
-                _playbackState.update { it.copy(sleepTimer = SleepTimerMode.Off) }
+                stopAfterSleepTimerTrack()
             }
             mediaController?.let { syncFromController(it) }
         }
@@ -405,6 +404,12 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         sleepTimerJob?.cancel()
         _playbackState.update { it.copy(sleepTimer = SleepTimerMode.EndOfTrack) }
         showToast("Joriy qo‘shiq tugagach pleyer to‘xtaydi")
+    }
+
+    private fun stopAfterSleepTimerTrack() {
+        mediaController?.pause()
+        _playbackState.update { it.copy(sleepTimer = SleepTimerMode.Off) }
+        showToast("Uyqu taymeri: qo‘shiq tugadi, pleyer to‘xtatildi")
     }
 
     fun cancelSleepTimer() {
