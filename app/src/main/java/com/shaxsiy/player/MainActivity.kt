@@ -1,7 +1,6 @@
 package com.shaxsiy.player
 
 import android.Manifest
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -31,7 +30,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.MusicNote
@@ -56,16 +54,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.lifecycleScope
 import com.shaxsiy.player.ui.components.FullPlayerSheet
 import com.shaxsiy.player.ui.components.GlassAmbientBackground
 import com.shaxsiy.player.ui.components.MiniPlayer
 import com.shaxsiy.player.ui.components.iosBounceClickable
 import com.shaxsiy.player.ui.screens.AllSongsScreen
 import com.shaxsiy.player.ui.screens.GroupsTabScreen
-import com.shaxsiy.player.ui.screens.SpotifyScreen
 import com.shaxsiy.player.ui.screens.YandexMusicScreen
-import com.shaxsiy.player.ui.theme.AccentSpotify
 import com.shaxsiy.player.ui.theme.NeonCyan
 import com.shaxsiy.player.ui.theme.NeonMagenta
 import com.shaxsiy.player.ui.theme.ShaxsiyPlayerTheme
@@ -73,7 +68,6 @@ import com.shaxsiy.player.ui.theme.TextPrimary
 import com.shaxsiy.player.ui.theme.TextSecondary
 import com.shaxsiy.player.ui.theme.YandexGold
 import com.shaxsiy.player.viewmodel.PlayerViewModel
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -81,8 +75,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        handleSpotifyRedirect(intent)
-
         setContent {
             ShaxsiyPlayerTheme {
                 MainAppScreen(viewModel = viewModel)
@@ -90,19 +82,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        handleSpotifyRedirect(intent)
-    }
-
-    private fun handleSpotifyRedirect(intent: Intent?) {
-        val data = intent?.data ?: return
-        if (data.scheme == "shaxsiyplayer" && data.host == "callback") {
-            lifecycleScope.launch {
-                viewModel.spotifyManager.handleAuthCallback(data)
-            }
-        }
-    }
 }
 
 private data class GlassNavItem(
@@ -125,8 +104,7 @@ private fun MainAppScreen(viewModel: PlayerViewModel) {
         listOf(
             GlassNavItem(0, "Guruhlar", Icons.Default.Folder, NeonCyan),
             GlassNavItem(1, "Musiqalar", Icons.Default.LibraryMusic, NeonMagenta),
-            GlassNavItem(2, "Spotify", Icons.Default.Cloud, AccentSpotify),
-            GlassNavItem(3, "Yandex", Icons.Default.MusicNote, YandexGold)
+            GlassNavItem(2, "Yandex", Icons.Default.MusicNote, YandexGold)
         )
     }
 
@@ -267,8 +245,7 @@ private fun MainAppScreen(viewModel: PlayerViewModel) {
                     when (tab) {
                         0 -> GroupsTabScreen(viewModel = viewModel)
                         1 -> AllSongsScreen(viewModel = viewModel)
-                        2 -> SpotifyScreen(viewModel = viewModel)
-                        3 -> YandexMusicScreen(viewModel = viewModel)
+                        2 -> YandexMusicScreen(viewModel = viewModel)
                     }
                 }
             }
