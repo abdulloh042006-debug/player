@@ -65,9 +65,14 @@ import com.shaxsiy.player.viewmodel.SleepTimerMode
 
 fun formatTimeMs(ms: Long): String {
     val totalSeconds = (ms / 1000L).coerceAtLeast(0L)
+    val hours = totalSeconds / 3600L
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
-    return "%02d:%02d".format(minutes, seconds)
+    return if (hours > 0L) {
+        "%02d:%02d:%02d".format(hours, minutes % 60L, seconds)
+    } else {
+        "%02d:%02d".format(minutes, seconds)
+    }
 }
 
 @Composable
