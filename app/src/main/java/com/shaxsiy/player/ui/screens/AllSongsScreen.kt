@@ -44,6 +44,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.shaxsiy.player.ui.components.TrackCoverThumbnail
 import com.shaxsiy.player.ui.components.formatTimeMs
 import com.shaxsiy.player.ui.theme.AccentGreen
 import com.shaxsiy.player.ui.theme.AmoledBlack
@@ -181,6 +182,13 @@ fun AllSongsScreen(viewModel: PlayerViewModel) {
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                             }
+                            TrackCoverThumbnail(
+                                trackUri = track.uri,
+                                modifier = Modifier.size(48.dp),
+                                accentColor = AccentGreen,
+                                surfaceColor = SurfaceElevated
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = track.title,

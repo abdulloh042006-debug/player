@@ -59,6 +59,7 @@ data class PlaybackUiState(
     val isPlaying: Boolean = false,
     val currentPositionMs: Long = 0L,
     val durationMs: Long = 0L,
+    val audioSessionId: Int = 0,
     val repeatMode: RepeatModeUi = RepeatModeUi.REPEAT_OFF,
     val isShuffleEnabled: Boolean = false,
     val playbackSpeed: Float = 1.0f,
@@ -186,6 +187,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                 isPlaying = controller.isPlaying,
                 currentPositionMs = controller.currentPosition.coerceAtLeast(0L),
                 durationMs = controller.duration.coerceAtLeast(0L),
+                audioSessionId = PlaybackService.audioSessionId,
                 repeatMode = controller.repeatMode.toUiRepeatMode(),
                 isShuffleEnabled = controller.shuffleModeEnabled
             )
@@ -201,7 +203,12 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
                     val pos = controller.currentPosition.coerceAtLeast(0L)
                     val dur = controller.duration.coerceAtLeast(0L)
                     _playbackState.update {
-                        it.copy(currentPositionMs = pos, durationMs = dur, isPlaying = controller.isPlaying)
+                        it.copy(
+                            currentPositionMs = pos,
+                            durationMs = dur,
+                            isPlaying = controller.isPlaying,
+                            audioSessionId = PlaybackService.audioSessionId
+                        )
                     }
                     val now = System.currentTimeMillis()
                     if (controller.isPlaying && now - lastSavedPositionTick >= 2000L) {

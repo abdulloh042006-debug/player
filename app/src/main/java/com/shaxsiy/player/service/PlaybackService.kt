@@ -26,6 +26,9 @@ class PlaybackService : MediaSessionService() {
     companion object {
         const val ACTION_REWIND_10 = "com.shaxsiy.player.ACTION_REWIND_10"
         const val ACTION_FORWARD_10 = "com.shaxsiy.player.ACTION_FORWARD_10"
+
+        @Volatile
+        var audioSessionId: Int = 0
     }
 
     @OptIn(UnstableApi::class)
@@ -43,6 +46,7 @@ class PlaybackService : MediaSessionService() {
             .setSeekBackIncrementMs(10_000L)
             .setSeekForwardIncrementMs(10_000L)
             .build()
+        audioSessionId = player.audioSessionId
 
         val openAppIntent = PendingIntent.getActivity(
             this,
@@ -125,6 +129,7 @@ class PlaybackService : MediaSessionService() {
             release()
         }
         mediaSession = null
+        audioSessionId = 0
         super.onDestroy()
     }
 }

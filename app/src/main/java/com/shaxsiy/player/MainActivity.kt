@@ -83,6 +83,7 @@ private fun MainAppScreen(viewModel: PlayerViewModel) {
         } else {
             perms.add(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
+        perms.add(Manifest.permission.RECORD_AUDIO)
         permissionLauncher.launch(perms.toTypedArray())
     }
 
@@ -178,7 +179,8 @@ private fun MainAppScreen(viewModel: PlayerViewModel) {
             onSelectSpeed = { viewModel.setPlaybackSpeed(it) },
             onSetSleepMinutes = { viewModel.setSleepTimerMinutes(it) },
             onSetSleepEndOfTrack = { viewModel.setSleepTimerEndOfTrack() },
-            onCancelSleep = { viewModel.cancelSleepTimer() }
+            onCancelSleep = { viewModel.cancelSleepTimer() },
+            onCoverChanged = { viewModel.showToast(it) }
         )
     }
 }

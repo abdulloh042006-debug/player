@@ -108,13 +108,14 @@ fun MiniPlayer(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(SurfaceDark),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier.size(42.dp)
                 ) {
-                    Icon(Icons.Default.MusicNote, contentDescription = null, tint = AccentGreen)
+                    TrackCoverThumbnail(
+                        trackUri = track.uri,
+                        modifier = Modifier.fillMaxSize(),
+                        accentColor = AccentGreen,
+                        surfaceColor = SurfaceDark
+                    )
                 }
                 Spacer(modifier = Modifier.width(10.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -174,7 +175,8 @@ fun FullPlayerSheet(
     onSelectSpeed: (Float) -> Unit,
     onSetSleepMinutes: (Int) -> Unit,
     onSetSleepEndOfTrack: () -> Unit,
-    onCancelSleep: () -> Unit
+    onCancelSleep: () -> Unit,
+    onCoverChanged: (String) -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showSpeedDialog by remember { mutableStateOf(false) }
@@ -221,22 +223,14 @@ fun FullPlayerSheet(
                 Spacer(modifier = Modifier.width(48.dp))
             }
 
-            // Markaziy muqova blok
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(220.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(SurfaceElevated),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MusicNote,
-                    contentDescription = null,
-                    tint = AccentGreen,
-                    modifier = Modifier.size(84.dp)
-                )
-            }
+            TrackCoverVisualizerSection(
+                trackUri = track?.uri,
+                isPlaying = state.isPlaying,
+                audioSessionId = state.audioSessionId,
+                accentColor = AccentGreen,
+                surfaceColor = SurfaceElevated,
+                onCoverChanged = onCoverChanged
+            )
 
             // Pastki bir qo‘lda boshqaruv zonasi
             Column(modifier = Modifier.fillMaxWidth()) {
