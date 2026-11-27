@@ -21,6 +21,8 @@ import com.shaxsiy.player.data.db.GroupTrackCrossRef
 import com.shaxsiy.player.data.db.GroupWithTrackCount
 import com.shaxsiy.player.data.local.AudioTrack
 import com.shaxsiy.player.data.local.LocalAudioRepository
+import com.shaxsiy.player.data.spotify.SpotifyManager
+import com.shaxsiy.player.data.spotify.SpotifyUiState
 import com.shaxsiy.player.data.yandex.YandexMusicManager
 import com.shaxsiy.player.data.yandex.YandexMusicUiState
 import com.shaxsiy.player.data.yandex.YandexTrackItem
@@ -71,6 +73,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
     private val db = AppDatabase.getInstance(application)
     private val groupDao = db.groupDao()
     private val audioRepo = LocalAudioRepository(application)
+    val spotifyManager = SpotifyManager(application)
     val yandexMusicManager = YandexMusicManager(application)
     private val gson = Gson()
 
@@ -93,6 +96,7 @@ class PlayerViewModel(application: Application) : AndroidViewModel(application) 
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val yandexState: StateFlow<YandexMusicUiState> = yandexMusicManager.state
+    val spotifyState: StateFlow<SpotifyUiState> = spotifyManager.state
 
     private var sleepTimerJob: Job? = null
     private var positionTrackerJob: Job? = null
