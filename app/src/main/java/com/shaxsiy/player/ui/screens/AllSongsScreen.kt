@@ -2,6 +2,7 @@ package com.shaxsiy.player.ui.screens
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,16 +21,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -41,15 +39,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.shaxsiy.player.ui.components.TrackCoverThumbnail
+import com.shaxsiy.player.ui.components.GlassCard
+import com.shaxsiy.player.ui.components.GlassCircleIconButton
+import com.shaxsiy.player.ui.components.GlassSearchBar
 import com.shaxsiy.player.ui.components.formatTimeMs
-import com.shaxsiy.player.ui.theme.AccentGreen
-import com.shaxsiy.player.ui.theme.AmoledBlack
-import com.shaxsiy.player.ui.theme.SurfaceDark
+import com.shaxsiy.player.ui.theme.NeonCyan
+import com.shaxsiy.player.ui.theme.NeonMagenta
 import com.shaxsiy.player.ui.theme.SurfaceElevated
 import com.shaxsiy.player.ui.theme.TextPrimary
 import com.shaxsiy.player.ui.theme.TextSecondary
@@ -79,63 +81,81 @@ fun AllSongsScreen(viewModel: PlayerViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AmoledBlack)
             .padding(horizontal = 16.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 12.dp),
+                .padding(top = 18.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             if (selectedUris.isNotEmpty()) {
                 Text(
                     text = "${selectedUris.size} ta tanlandi",
-                    color = AccentGreen,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Row {
-                    IconButton(onClick = { showPickGroupDialog = true }) {
-                        Icon(Icons.Default.PlaylistAdd, contentDescription = "Guruhga qo‘shish", tint = AccentGreen)
-                    }
-                    IconButton(onClick = { selectedUris.clear() }) {
-                        Icon(Icons.Default.Close, contentDescription = "Bekor qilish", tint = TextPrimary)
-                    }
-                }
-            } else {
-                Text(
-                    text = "Barcha musiqalar (${filtered.size})",
-                    color = TextPrimary,
+                    color = NeonCyan,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Row {
-                    IconButton(onClick = { viewModel.toggleHideShortAudio() }) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GlassCircleIconButton(
+                        onClick = { showPickGroupDialog = true },
+                        size = 40.dp,
+                        isGlowing = true,
+                        glowColor = NeonCyan
+                    ) {
+                        Icon(Icons.Default.PlaylistAdd, contentDescription = "Guruhga qo‘shish", tint = TextPrimary, modifier = Modifier.size(20.dp))
+                    }
+                    GlassCircleIconButton(
+                        onClick = { selectedUris.clear() },
+                        size = 40.dp
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = "Bekor qilish", tint = TextPrimary, modifier = Modifier.size(20.dp))
+                    }
+                }
+            } else {
+                Column {
+                    Text(
+                        text = "Musiqalar",
+                        color = TextPrimary,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "${filtered.size} ta audio fayl topildi",
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GlassCircleIconButton(
+                        onClick = { viewModel.toggleHideShortAudio() },
+                        size = 40.dp,
+                        isGlowing = hideShort,
+                        glowColor = NeonCyan
+                    ) {
                         Icon(
                             Icons.Default.FilterList,
                             contentDescription = "10s filtr",
-                            tint = if (hideShort) AccentGreen else TextSecondary
+                            tint = if (hideShort) TextPrimary else TextSecondary,
+                            modifier = Modifier.size(19.dp)
                         )
                     }
-                    IconButton(onClick = { viewModel.scanLocalAudio() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Yangilash", tint = TextSecondary)
+                    GlassCircleIconButton(
+                        onClick = { viewModel.scanLocalAudio() },
+                        size = 40.dp
+                    ) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Yangilash", tint = TextPrimary, modifier = Modifier.size(19.dp))
                     }
                 }
             }
         }
 
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            placeholder = { Text("Nomi, ijrochi yoki papka bo‘yicha qidirish...") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            singleLine = true,
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 10.dp)
+        GlassSearchBar(
+            query = searchQuery,
+            onQueryChange = { searchQuery = it },
+            placeholder = "Nomi, ijrochi yoki papka bo‘yicha qidirish...",
+            modifier = Modifier.padding(bottom = 12.dp)
         )
 
         if (filtered.isEmpty()) {
@@ -143,15 +163,16 @@ fun AllSongsScreen(viewModel: PlayerViewModel) {
                 Text("Musiqalar topilmadi", color = TextSecondary)
             }
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 itemsIndexed(filtered, key = { _, t -> t.uri }) { index, track ->
                     val isSelected = track.uri in selectedUris
                     val isPlayingTrack = playbackState.activeGroupId == null &&
                         playbackState.currentTrack?.uri == track.uri
 
-                    Surface(
-                        color = if (isSelected || isPlayingTrack) SurfaceElevated else SurfaceDark,
-                        shape = RoundedCornerShape(12.dp),
+                    GlassCard(
+                        cornerRadius = 18.dp,
+                        isHighlighted = isSelected || isPlayingTrack,
+                        accentColor = if (isSelected) NeonMagenta else NeonCyan,
                         modifier = Modifier
                             .fillMaxWidth()
                             .combinedClickable(
@@ -179,22 +200,40 @@ fun AllSongsScreen(viewModel: PlayerViewModel) {
                                     onCheckedChange = {
                                         if (it) selectedUris.add(track.uri) else selectedUris.remove(track.uri)
                                     },
-                                    colors = CheckboxDefaults.colors(checkedColor = AccentGreen)
+                                    colors = CheckboxDefaults.colors(checkedColor = NeonMagenta)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(42.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(
+                                            Brush.linearGradient(
+                                                listOf(
+                                                    NeonCyan.copy(alpha = if (isPlayingTrack) 0.35f else 0.16f),
+                                                    NeonMagenta.copy(alpha = if (isPlayingTrack) 0.35f else 0.16f)
+                                                )
+                                            )
+                                        )
+                                        .border(1.dp, Color.White.copy(alpha = 0.22f), RoundedCornerShape(12.dp)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.MusicNote,
+                                        contentDescription = null,
+                                        tint = if (isPlayingTrack) NeonCyan else TextSecondary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
                             }
-                            TrackCoverThumbnail(
-                                trackUri = track.uri,
-                                modifier = Modifier.size(48.dp),
-                                accentColor = AccentGreen,
-                                surfaceColor = SurfaceElevated
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
+
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = track.title,
-                                    color = if (isPlayingTrack) AccentGreen else TextPrimary,
-                                    fontWeight = FontWeight.Medium,
+                                    color = if (isPlayingTrack) NeonCyan else TextPrimary,
+                                    fontWeight = FontWeight.SemiBold,
                                     fontSize = 15.sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
@@ -210,7 +249,7 @@ fun AllSongsScreen(viewModel: PlayerViewModel) {
                         }
                     }
                 }
-                item { Spacer(modifier = Modifier.height(80.dp)) }
+                item { Spacer(modifier = Modifier.height(100.dp)) }
             }
         }
     }

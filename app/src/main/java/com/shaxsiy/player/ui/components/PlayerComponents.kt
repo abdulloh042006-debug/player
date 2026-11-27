@@ -1,8 +1,7 @@
 package com.shaxsiy.player.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,42 +30,32 @@ import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.shaxsiy.player.ui.theme.AccentGreen
-import com.shaxsiy.player.ui.theme.AmoledBlack
-import com.shaxsiy.player.ui.theme.SurfaceDark
+import com.shaxsiy.player.ui.theme.DeepSpaceBg
+import com.shaxsiy.player.ui.theme.NeonCyan
+import com.shaxsiy.player.ui.theme.NeonMagenta
 import com.shaxsiy.player.ui.theme.SurfaceElevated
 import com.shaxsiy.player.ui.theme.TextPrimary
 import com.shaxsiy.player.ui.theme.TextSecondary
@@ -79,24 +68,6 @@ fun formatTimeMs(ms: Long): String {
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
     return "%02d:%02d".format(minutes, seconds)
-}
-
-fun formatSleepDurationMinutes(minutes: Int): String {
-    val safeMinutes = minutes.coerceAtLeast(0)
-    return if (safeMinutes >= 60) {
-        "%02d:%02d:00".format(safeMinutes / 60, safeMinutes % 60)
-    } else {
-        "%02d:00".format(safeMinutes)
-    }
-}
-
-fun formatSleepDurationSeconds(seconds: Long): String {
-    val safeSeconds = seconds.coerceAtLeast(0L)
-    return if (safeSeconds >= 3600L) {
-        "%02d:%02d:%02d".format(safeSeconds / 3600L, (safeSeconds / 60L) % 60L, safeSeconds % 60L)
-    } else {
-        "%02d:%02d".format(safeSeconds / 60L, safeSeconds % 60L)
-    }
 }
 
 @Composable
@@ -112,22 +83,15 @@ fun MiniPlayer(
         (state.currentPositionMs.toFloat() / state.durationMs.toFloat()).coerceIn(0f, 1f)
     } else 0f
 
-    Surface(
-        color = SurfaceElevated,
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onExpand() }
+            .padding(horizontal = 14.dp, vertical = 6.dp),
+        cornerRadius = 22.dp,
+        isHighlighted = state.isPlaying,
+        onClick = onExpand
     ) {
         Column {
-            LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(2.5.dp),
-                color = AccentGreen,
-                trackColor = SurfaceDark
-            )
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -135,16 +99,26 @@ fun MiniPlayer(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
-                    modifier = Modifier.size(42.dp)
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(13.dp))
+                        .background(
+                            Brush.linearGradient(
+                                listOf(NeonCyan.copy(alpha = 0.28f), NeonMagenta.copy(alpha = 0.28f))
+                            )
+                        )
+                        .border(
+                            1.dp,
+                            Color.White.copy(alpha = 0.25f),
+                            RoundedCornerShape(13.dp)
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
-                    TrackCoverThumbnail(
-                        trackUri = track.uri,
-                        modifier = Modifier.fillMaxSize(),
-                        accentColor = AccentGreen,
-                        surfaceColor = SurfaceDark
-                    )
+                    Icon(Icons.Default.MusicNote, contentDescription = null, tint = NeonCyan)
                 }
-                Spacer(modifier = Modifier.width(10.dp))
+
+                Spacer(modifier = Modifier.width(12.dp))
+
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = track.title,
@@ -162,25 +136,47 @@ fun MiniPlayer(
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-                IconButton(onClick = onBackward10) {
-                    Icon(Icons.Default.Replay10, contentDescription = "-10s", tint = TextPrimary)
+
+                IconButton(onClick = onBackward10, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.Default.Replay10, contentDescription = "-10s", tint = TextPrimary, modifier = Modifier.size(21.dp))
                 }
-                FilledIconButton(
+
+                Spacer(modifier = Modifier.width(4.dp))
+
+                GlassCircleIconButton(
                     onClick = onPlayPause,
-                    colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = AccentGreen,
-                        contentColor = AmoledBlack
-                    ),
-                    modifier = Modifier.size(40.dp)
+                    size = 40.dp,
+                    isGlowing = true,
+                    glowColor = NeonCyan
                 ) {
                     Icon(
                         imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = "Play/Pause"
+                        contentDescription = "Play/Pause",
+                        tint = TextPrimary,
+                        modifier = Modifier.size(22.dp)
                     )
                 }
-                IconButton(onClick = onForward10) {
-                    Icon(Icons.Default.Forward10, contentDescription = "+10s", tint = TextPrimary)
+
+                Spacer(modifier = Modifier.width(4.dp))
+
+                IconButton(onClick = onForward10, modifier = Modifier.size(36.dp)) {
+                    Icon(Icons.Default.Forward10, contentDescription = "+10s", tint = TextPrimary, modifier = Modifier.size(21.dp))
                 }
+            }
+
+            // Neon gradient progress chizig‘i
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(3.dp)
+                    .background(Color.White.copy(alpha = 0.08f))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(progress)
+                        .height(3.dp)
+                        .background(Brush.horizontalGradient(listOf(NeonCyan, NeonMagenta)))
+                )
             }
         }
     }
@@ -203,7 +199,7 @@ fun FullPlayerSheet(
     onSetSleepMinutes: (Int) -> Unit,
     onSetSleepEndOfTrack: () -> Unit,
     onCancelSleep: () -> Unit,
-    onCoverChanged: (String) -> Unit
+    onCoverChanged: ((String) -> Unit)? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showSpeedDialog by remember { mutableStateOf(false) }
@@ -212,233 +208,262 @@ fun FullPlayerSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = AmoledBlack,
+        containerColor = DeepSpaceBg,
         dragHandle = null
     ) {
-        val track = state.currentTrack
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            // Yuqori sarlavha
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+        GlassAmbientBackground(isPlaying = state.isPlaying) {
+            val track = state.currentTrack
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 22.dp, vertical = 14.dp),
+                verticalArrangement = Arrangement.SpaceBetween
             ) {
-                IconButton(onClick = onDismiss) {
-                    Icon(
-                        Icons.Default.KeyboardArrowDown,
-                        contentDescription = "Yopish",
-                        tint = TextPrimary,
-                        modifier = Modifier.size(30.dp)
-                    )
-                }
+                // iOS uslubidagi yuqori handle + sarlavha
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("JORIY GURUH", color = TextSecondary, fontSize = 11.sp)
+                    Box(
+                        modifier = Modifier
+                            .width(40.dp)
+                            .height(4.dp)
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.28f))
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        GlassCircleIconButton(onClick = onDismiss, size = 40.dp) {
+                            Icon(
+                                Icons.Default.KeyboardArrowDown,
+                                contentDescription = "Yopish",
+                                tint = TextPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("JORIY GURUH", color = TextSecondary, fontSize = 10.sp, letterSpacing = 1.2.sp)
+                            Text(
+                                text = state.activeGroupName ?: "Barcha musiqalar",
+                                color = NeonCyan,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(40.dp))
+                    }
+                }
+
+                // Markaziy rasm + 3 xil neon vizualizator
+                TrackCoverVisualizerSection(
+                    trackUri = track?.uri,
+                    isPlaying = state.isPlaying,
+                    accentColor = NeonCyan,
+                    secondaryColor = NeonMagenta,
+                    onCoverChanged = onCoverChanged
+                )
+
+                // Pastki Glassmorphism boshqaruv paneli
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
-                        text = state.activeGroupName ?: "Barcha musiqalar",
-                        color = AccentGreen,
+                        text = track?.title ?: "Qo‘shiq tanlanmagan",
+                        color = TextPrimary,
+                        fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                }
-                Spacer(modifier = Modifier.width(48.dp))
-            }
-
-            TrackCoverVisualizerSection(
-                trackUri = track?.uri,
-                isPlaying = state.isPlaying,
-                audioSessionId = state.audioSessionId,
-                accentColor = AccentGreen,
-                surfaceColor = SurfaceElevated,
-                onCoverChanged = onCoverChanged
-            )
-
-            // Pastki bir qo‘lda boshqaruv zonasi
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = track?.title ?: "Qo‘shiq tanlanmagan",
-                    color = TextPrimary,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = track?.artist ?: "",
-                    color = TextSecondary,
-                    fontSize = 15.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Seekbar + Aniq vaqt (01:24 / 03:45)
-                val maxDur = state.durationMs.coerceAtLeast(1L).toFloat()
-                Slider(
-                    value = state.currentPositionMs.toFloat().coerceIn(0f, maxDur),
-                    onValueChange = { onSeekTo(it.toLong()) },
-                    valueRange = 0f..maxDur,
-                    colors = SliderDefaults.colors(
-                        thumbColor = AccentGreen,
-                        activeTrackColor = AccentGreen,
-                        inactiveTrackColor = SurfaceElevated
-                    )
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(formatTimeMs(state.currentPositionMs), color = TextSecondary, fontSize = 12.sp)
-                    Text(formatTimeMs(state.durationMs), color = TextSecondary, fontSize = 12.sp)
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                // Katta bir qo‘l uchun -10s va +10s tugmalari
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(
-                        color = SurfaceElevated,
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.clickable { onBackward10() }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 22.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(Icons.Default.Replay10, contentDescription = "-10s", tint = TextPrimary)
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("-10s", color = TextPrimary, fontWeight = FontWeight.SemiBold)
-                        }
-                    }
-
-                    Surface(
-                        color = SurfaceElevated,
-                        shape = RoundedCornerShape(16.dp),
-                        modifier = Modifier.clickable { onForward10() }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 22.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("+10s", color = TextPrimary, fontWeight = FontWeight.SemiBold)
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Icon(Icons.Default.Forward10, contentDescription = "+10s", tint = TextPrimary)
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(18.dp))
-
-                // Asosiy tugmalar: Shuffle | Prev | Play/Pause | Next | Repeat
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = onToggleShuffle) {
-                        Icon(
-                            Icons.Default.Shuffle,
-                            contentDescription = "Aralashtirish",
-                            tint = if (state.isShuffleEnabled) AccentGreen else TextSecondary
-                        )
-                    }
-
-                    IconButton(onClick = onPrevious, modifier = Modifier.size(52.dp)) {
-                        Icon(
-                            Icons.Default.SkipPrevious,
-                            contentDescription = "Oldingi",
-                            tint = TextPrimary,
-                            modifier = Modifier.size(38.dp)
-                        )
-                    }
-
-                    FilledIconButton(
-                        onClick = onPlayPause,
-                        shape = CircleShape,
-                        colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = AccentGreen,
-                            contentColor = AmoledBlack
-                        ),
-                        modifier = Modifier.size(68.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = "Play/Pause",
-                            modifier = Modifier.size(38.dp)
-                        )
-                    }
-
-                    IconButton(onClick = onNext, modifier = Modifier.size(52.dp)) {
-                        Icon(
-                            Icons.Default.SkipNext,
-                            contentDescription = "Keyingi",
-                            tint = TextPrimary,
-                            modifier = Modifier.size(38.dp)
-                        )
-                    }
-
-                    IconButton(onClick = onCycleRepeat) {
-                        val (icon, tint) = when (state.repeatMode) {
-                            RepeatModeUi.REPEAT_OFF -> Icons.Default.Repeat to TextSecondary
-                            RepeatModeUi.REPEAT_ONE -> Icons.Default.RepeatOne to AccentGreen
-                            RepeatModeUi.REPEAT_GROUP -> Icons.Default.Repeat to AccentGreen
-                        }
-                        Icon(icon, contentDescription = "Takrorlash", tint = tint)
-                    }
-                }
-
-                // Takrorlash holati yozuvi + Tezlik + Uyqu taymeri
-                Spacer(modifier = Modifier.height(14.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    TextButton(onClick = { showSpeedDialog = true }) {
-                        Icon(Icons.Default.Speed, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(18.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("${state.playbackSpeed}x", color = TextPrimary)
-                    }
-
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = when (state.repeatMode) {
-                            RepeatModeUi.REPEAT_OFF -> "Takrorlash: O‘chiq"
-                            RepeatModeUi.REPEAT_ONE -> "1 qo‘shiq takrori"
-                            RepeatModeUi.REPEAT_GROUP -> "Butun guruh takrori"
-                        },
-                        color = if (state.repeatMode == RepeatModeUi.REPEAT_OFF) TextSecondary else AccentGreen,
-                        fontSize = 12.sp
+                        text = track?.artist ?: "",
+                        color = TextSecondary,
+                        fontSize = 15.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
 
-                    TextButton(onClick = { showSleepDialog = true }) {
-                        Icon(
-                            Icons.Default.Timer,
-                            contentDescription = null,
-                            tint = if (state.sleepTimer is SleepTimerMode.Off) TextSecondary else AccentGreen,
-                            modifier = Modifier.size(18.dp)
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    val maxDur = state.durationMs.coerceAtLeast(1L).toFloat()
+                    Slider(
+                        value = state.currentPositionMs.toFloat().coerceIn(0f, maxDur),
+                        onValueChange = { onSeekTo(it.toLong()) },
+                        valueRange = 0f..maxDur,
+                        colors = SliderDefaults.colors(
+                            thumbColor = Color.White,
+                            activeTrackColor = NeonCyan,
+                            inactiveTrackColor = Color.White.copy(alpha = 0.16f)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        val timerLabel = when (val t = state.sleepTimer) {
-                            is SleepTimerMode.Off -> "Taymer"
-                            is SleepTimerMode.EndOfTrack -> "Oxirida"
-                            is SleepTimerMode.Countdown -> formatSleepDurationSeconds(t.remainingSeconds)
-                        }
-                        Text(timerLabel, color = TextPrimary)
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(formatTimeMs(state.currentPositionMs), color = TextSecondary, fontSize = 12.sp)
+                        Text(formatTimeMs(state.durationMs), color = TextSecondary, fontSize = 12.sp)
                     }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Katta shisha -10s va +10s tugmalari
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        GlassPillButton(onClick = onBackward10) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 11.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Replay10, contentDescription = "-10s", tint = NeonCyan, modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("-10s", color = TextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                            }
+                        }
+
+                        GlassPillButton(onClick = onForward10) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 24.dp, vertical = 11.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("+10s", color = TextPrimary, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Icon(Icons.Default.Forward10, contentDescription = "+10s", tint = NeonMagenta, modifier = Modifier.size(20.dp))
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Asosiy tugmalar: Shuffle | Prev | Play/Pause | Next | Repeat
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        GlassCircleIconButton(
+                            onClick = onToggleShuffle,
+                            size = 44.dp,
+                            isGlowing = state.isShuffleEnabled,
+                            glowColor = NeonCyan
+                        ) {
+                            Icon(
+                                Icons.Default.Shuffle,
+                                contentDescription = "Aralashtirish",
+                                tint = if (state.isShuffleEnabled) TextPrimary else TextSecondary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        GlassCircleIconButton(onClick = onPrevious, size = 50.dp) {
+                            Icon(
+                                Icons.Default.SkipPrevious,
+                                contentDescription = "Oldingi",
+                                tint = TextPrimary,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+
+                        // Neon nurlanib turuvchi katta Play/Pause tugmasi
+                        Box(
+                            modifier = Modifier
+                                .size(72.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    Brush.linearGradient(listOf(NeonCyan, NeonMagenta))
+                                )
+                                .border(1.5.dp, Color.White.copy(alpha = 0.65f), CircleShape)
+                                .iosBounceClickable(scaleDown = 0.90f, onClick = onPlayPause),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = "Play/Pause",
+                                tint = DeepSpaceBg,
+                                modifier = Modifier.size(38.dp)
+                            )
+                        }
+
+                        GlassCircleIconButton(onClick = onNext, size = 50.dp) {
+                            Icon(
+                                Icons.Default.SkipNext,
+                                contentDescription = "Keyingi",
+                                tint = TextPrimary,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+
+                        val repeatActive = state.repeatMode != RepeatModeUi.REPEAT_OFF
+                        GlassCircleIconButton(
+                            onClick = onCycleRepeat,
+                            size = 44.dp,
+                            isGlowing = repeatActive,
+                            glowColor = NeonMagenta
+                        ) {
+                            val icon = when (state.repeatMode) {
+                                RepeatModeUi.REPEAT_ONE -> Icons.Default.RepeatOne
+                                else -> Icons.Default.Repeat
+                            }
+                            Icon(
+                                icon,
+                                contentDescription = "Takrorlash",
+                                tint = if (repeatActive) TextPrimary else TextSecondary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Pastki qo‘shimcha panel: Tezlik | Takrorlash holati | Uyqu taymeri
+                    GlassCard(cornerRadius = 18.dp) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(onClick = { showSpeedDialog = true }) {
+                                Icon(Icons.Default.Speed, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(17.dp))
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text("${state.playbackSpeed}x", color = TextPrimary, fontSize = 13.sp)
+                            }
+
+                            Text(
+                                text = when (state.repeatMode) {
+                                    RepeatModeUi.REPEAT_OFF -> "Takrorlash: O‘chiq"
+                                    RepeatModeUi.REPEAT_ONE -> "1 qo‘shiq takrori"
+                                    RepeatModeUi.REPEAT_GROUP -> "Butun guruh takrori"
+                                },
+                                color = if (state.repeatMode == RepeatModeUi.REPEAT_OFF) TextSecondary else NeonCyan,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+
+                            TextButton(onClick = { showSleepDialog = true }) {
+                                Icon(
+                                    Icons.Default.Timer,
+                                    contentDescription = null,
+                                    tint = if (state.sleepTimer is SleepTimerMode.Off) TextSecondary else NeonMagenta,
+                                    modifier = Modifier.size(17.dp)
+                                )
+                                Spacer(modifier = Modifier.width(5.dp))
+                                val timerLabel = when (val t = state.sleepTimer) {
+                                    is SleepTimerMode.Off -> "Taymer"
+                                    is SleepTimerMode.EndOfTrack -> "Oxirida"
+                                    is SleepTimerMode.Countdown -> formatTimeMs(t.remainingSeconds * 1000L)
+                                }
+                                Text(timerLabel, color = TextPrimary, fontSize = 13.sp)
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
                 }
-                Spacer(modifier = Modifier.height(12.dp))
             }
         }
     }
@@ -461,7 +486,7 @@ fun FullPlayerSheet(
                         ) {
                             Text(
                                 text = "${spd}x",
-                                color = if (state.playbackSpeed == spd) AccentGreen else TextPrimary,
+                                color = if (state.playbackSpeed == spd) NeonCyan else TextPrimary,
                                 fontWeight = if (state.playbackSpeed == spd) FontWeight.Bold else FontWeight.Normal
                             )
                         }
@@ -477,172 +502,50 @@ fun FullPlayerSheet(
     }
 
     if (showSleepDialog) {
-        SleepTimerDialog(
-            currentMode = state.sleepTimer,
-            onDismiss = { showSleepDialog = false },
-            onSetSleepMinutes = {
-                onSetSleepMinutes(it)
-                showSleepDialog = false
+        AlertDialog(
+            onDismissRequest = { showSleepDialog = false },
+            containerColor = SurfaceElevated,
+            title = { Text("Uyqu taymeri", color = TextPrimary) },
+            text = {
+                Column {
+                    listOf(15, 30, 45, 60).forEach { min ->
+                        TextButton(
+                            onClick = {
+                                onSetSleepMinutes(min)
+                                showSleepDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("$min daqiqa", color = TextPrimary)
+                        }
+                    }
+                    TextButton(
+                        onClick = {
+                            onSetSleepEndOfTrack()
+                            showSleepDialog = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Joriy qo‘shiq tugagach", color = NeonCyan)
+                    }
+                    if (state.sleepTimer !is SleepTimerMode.Off) {
+                        TextButton(
+                            onClick = {
+                                onCancelSleep()
+                                showSleepDialog = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Taymerni o‘chirish", color = TextSecondary)
+                        }
+                    }
+                }
             },
-            onSetSleepEndOfTrack = {
-                onSetSleepEndOfTrack()
-                showSleepDialog = false
-            },
-            onCancelSleep = {
-                onCancelSleep()
-                showSleepDialog = false
+            confirmButton = {
+                TextButton(onClick = { showSleepDialog = false }) {
+                    Text("Yopish", color = TextSecondary)
+                }
             }
         )
     }
-}
-
-@Composable
-private fun SleepTimerDialog(
-    currentMode: SleepTimerMode,
-    onDismiss: () -> Unit,
-    onSetSleepMinutes: (Int) -> Unit,
-    onSetSleepEndOfTrack: () -> Unit,
-    onCancelSleep: () -> Unit
-) {
-    val initialMinutes = when (currentMode) {
-        is SleepTimerMode.Countdown -> ((currentMode.remainingSeconds + 59L) / 60L).toInt()
-        else -> 30
-    }.coerceIn(5, 225)
-    var selectedMinutes by remember(currentMode) { mutableIntStateOf(initialMinutes) }
-    var endOfTrack by remember(currentMode) { mutableStateOf(currentMode is SleepTimerMode.EndOfTrack) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = Color(0xFF151515),
-        title = {
-            Text(
-                text = "Uyqu taymeri",
-                color = TextPrimary,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth()
-            )
-        },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("Trek yoki epizod oxiri", color = TextPrimary, fontSize = 15.sp)
-                    Switch(
-                        checked = endOfTrack,
-                        onCheckedChange = { endOfTrack = it }
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Box(
-                    modifier = Modifier.size(250.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        val stroke = 12.dp.toPx()
-                        val diameter = size.minDimension - stroke
-                        val topLeft = Offset(
-                            (size.width - diameter) / 2f,
-                            (size.height - diameter) / 2f
-                        )
-                        drawArc(
-                            color = SurfaceDark,
-                            startAngle = -90f,
-                            sweepAngle = 360f,
-                            useCenter = false,
-                            topLeft = topLeft,
-                            size = androidx.compose.ui.geometry.Size(diameter, diameter),
-                            style = Stroke(width = stroke, cap = StrokeCap.Round)
-                        )
-                        drawArc(
-                            color = AccentGreen,
-                            startAngle = -90f,
-                            sweepAngle = 360f * selectedMinutes / 225f,
-                            useCenter = false,
-                            topLeft = topLeft,
-                            size = androidx.compose.ui.geometry.Size(diameter, diameter),
-                            style = Stroke(width = stroke, cap = StrokeCap.Round)
-                        )
-                        val angle = Math.toRadians((-90.0 + 360.0 * selectedMinutes / 225.0))
-                        val radius = diameter / 2f
-                        val center = Offset(size.width / 2f, size.height / 2f)
-                        drawCircle(
-                            color = AccentGreen,
-                            radius = 9.dp.toPx(),
-                            center = Offset(
-                                center.x + radius * kotlin.math.cos(angle).toFloat(),
-                                center.y + radius * kotlin.math.sin(angle).toFloat()
-                            )
-                        )
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = formatSleepDurationMinutes(selectedMinutes),
-                            color = TextPrimary,
-                            fontSize = 34.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = if (endOfTrack) "Trek tugagach" else "vaqt bo‘yicha",
-                            color = if (endOfTrack) AccentGreen else TextSecondary,
-                            fontSize = 12.sp
-                        )
-                    }
-                }
-
-                Slider(
-                    value = selectedMinutes.toFloat(),
-                    onValueChange = {
-                        selectedMinutes = ((it / 5f).toInt() * 5).coerceIn(5, 225)
-                    },
-                    valueRange = 5f..225f,
-                    steps = 43,
-                    enabled = !endOfTrack,
-                    colors = SliderDefaults.colors(
-                        thumbColor = AccentGreen,
-                        activeTrackColor = AccentGreen,
-                        inactiveTrackColor = SurfaceDark
-                    )
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("00:05:00", color = TextSecondary, fontSize = 11.sp)
-                    Text("03:45:00", color = TextSecondary, fontSize = 11.sp)
-                }
-                if (currentMode !is SleepTimerMode.Off) {
-                    TextButton(onClick = onCancelSleep) {
-                        Text("Taymerni o‘chirish", color = TextSecondary)
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (endOfTrack) onSetSleepEndOfTrack() else onSetSleepMinutes(selectedMinutes)
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = AccentGreen,
-                    contentColor = AmoledBlack
-                ),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Boshlash", fontWeight = FontWeight.Bold)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Bekor qilish", color = TextSecondary)
-            }
-        }
-    )
 }

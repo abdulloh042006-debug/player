@@ -3,6 +3,7 @@ package com.shaxsiy.player.ui.screens
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -33,12 +35,9 @@ import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -51,17 +50,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.shaxsiy.player.data.db.GroupWithTrackCount
-import com.shaxsiy.player.ui.components.TrackCoverThumbnail
+import com.shaxsiy.player.ui.components.GlassCard
+import com.shaxsiy.player.ui.components.GlassCircleIconButton
 import com.shaxsiy.player.ui.components.formatTimeMs
-import com.shaxsiy.player.ui.theme.AccentGreen
-import com.shaxsiy.player.ui.theme.AmoledBlack
+import com.shaxsiy.player.ui.components.iosBounceClickable
 import com.shaxsiy.player.ui.theme.DangerRed
-import com.shaxsiy.player.ui.theme.SurfaceDark
+import com.shaxsiy.player.ui.theme.DeepSpaceBg
+import com.shaxsiy.player.ui.theme.NeonCyan
+import com.shaxsiy.player.ui.theme.NeonMagenta
 import com.shaxsiy.player.ui.theme.SurfaceElevated
 import com.shaxsiy.player.ui.theme.TextPrimary
 import com.shaxsiy.player.ui.theme.TextSecondary
@@ -107,67 +110,81 @@ private fun GroupsListScreen(
         if (uri != null) viewModel.importBackupFromUri(uri)
     }
 
-    Scaffold(
-        containerColor = AmoledBlack,
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    groupNameInput = ""
-                    showCreateDialog = true
-                },
-                containerColor = AccentGreen,
-                contentColor = AmoledBlack
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Yangi guruh")
-            }
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp)
-        ) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 14.dp),
+                    .padding(top = 18.dp, bottom = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
-                    text = "Guruhlar",
-                    color = TextPrimary,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Row {
-                    IconButton(onClick = { exportLauncher.launch("shaxsiy_guruhlar_backup.json") }) {
-                        Icon(Icons.Default.Backup, contentDescription = "Zaxira nusxa", tint = TextSecondary)
+                Column {
+                    Text(
+                        text = "Guruhlar",
+                        color = TextPrimary,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Izolyatsiyalangan shaxsiy playlistlar",
+                        color = TextSecondary,
+                        fontSize = 12.sp
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GlassCircleIconButton(
+                        onClick = { exportLauncher.launch("shaxsiy_guruhlar_backup.json") },
+                        size = 40.dp
+                    ) {
+                        Icon(Icons.Default.Backup, contentDescription = "Zaxira nusxa", tint = NeonCyan, modifier = Modifier.size(19.dp))
                     }
-                    IconButton(onClick = { importLauncher.launch(arrayOf("application/json")) }) {
-                        Icon(Icons.Default.Restore, contentDescription = "Tiklash", tint = TextSecondary)
+                    GlassCircleIconButton(
+                        onClick = { importLauncher.launch(arrayOf("application/json")) },
+                        size = 40.dp
+                    ) {
+                        Icon(Icons.Default.Restore, contentDescription = "Tiklash", tint = NeonMagenta, modifier = Modifier.size(19.dp))
                     }
                 }
             }
 
             if (groups.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "Hali guruh yaratilmagan.\n+ tugmasini bosib shaxsiy guruh yarating.",
-                        color = TextSecondary,
-                        fontSize = 14.sp
-                    )
+                    GlassCard(
+                        cornerRadius = 24.dp,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(Icons.Default.Folder, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(44.dp))
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = "Hali guruh yaratilmagan",
+                                color = TextPrimary,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 16.sp
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Pastdagi + tugmasini bosib shaxsiy guruh yarating.",
+                                color = TextSecondary,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
                 }
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     itemsIndexed(groups, key = { _, g -> g.id }) { _, group ->
-                        Surface(
-                            color = SurfaceDark,
-                            shape = RoundedCornerShape(14.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onOpenGroup(group.id) }
+                        GlassCard(
+                            cornerRadius = 20.dp,
+                            onClick = { onOpenGroup(group.id) }
                         ) {
                             Row(
                                 modifier = Modifier
@@ -177,14 +194,19 @@ private fun GroupsListScreen(
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(46.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(SurfaceElevated),
+                                        .size(48.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(
+                                            Brush.linearGradient(
+                                                listOf(NeonCyan.copy(alpha = 0.25f), NeonMagenta.copy(alpha = 0.25f))
+                                            )
+                                        )
+                                        .border(1.dp, Color.White.copy(alpha = 0.28f), RoundedCornerShape(14.dp)),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Icon(Icons.Default.Folder, contentDescription = null, tint = AccentGreen)
+                                    Icon(Icons.Default.Folder, contentDescription = null, tint = NeonCyan)
                                 }
-                                Spacer(modifier = Modifier.width(12.dp))
+                                Spacer(modifier = Modifier.width(14.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = group.name,
@@ -204,17 +226,35 @@ private fun GroupsListScreen(
                                     editingGroup = group
                                     groupNameInput = group.name
                                 }) {
-                                    Icon(Icons.Default.Edit, contentDescription = "Tahrirlash", tint = TextSecondary)
+                                    Icon(Icons.Default.Edit, contentDescription = "Tahrirlash", tint = TextSecondary, modifier = Modifier.size(20.dp))
                                 }
                                 IconButton(onClick = { viewModel.deleteGroup(group.id) }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "O‘chirish", tint = DangerRed)
+                                    Icon(Icons.Default.Delete, contentDescription = "O‘chirish", tint = DangerRed, modifier = Modifier.size(20.dp))
                                 }
                             }
                         }
                     }
-                    item { Spacer(modifier = Modifier.height(80.dp)) }
+                    item { Spacer(modifier = Modifier.height(110.dp)) }
                 }
             }
+        }
+
+        // Neon gradient suzib turuvchi + tugmasi
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 16.dp, end = 4.dp)
+                .size(58.dp)
+                .clip(CircleShape)
+                .background(Brush.linearGradient(listOf(NeonCyan, NeonMagenta)))
+                .border(1.5.dp, Color.White.copy(alpha = 0.55f), CircleShape)
+                .iosBounceClickable(scaleDown = 0.90f) {
+                    groupNameInput = ""
+                    showCreateDialog = true
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "Yangi guruh", tint = DeepSpaceBg, modifier = Modifier.size(28.dp))
         }
     }
 
@@ -236,7 +276,7 @@ private fun GroupsListScreen(
                     viewModel.createGroup(groupNameInput)
                     showCreateDialog = false
                 }) {
-                    Text("Yaratish", color = AccentGreen)
+                    Text("Yaratish", color = NeonCyan)
                 }
             },
             dismissButton = {
@@ -265,7 +305,7 @@ private fun GroupsListScreen(
                     viewModel.renameGroup(target.id, groupNameInput)
                     editingGroup = null
                 }) {
-                    Text("Saqlash", color = AccentGreen)
+                    Text("Saqlash", color = NeonCyan)
                 }
             },
             dismissButton = {
@@ -293,69 +333,76 @@ private fun GroupDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(AmoledBlack)
             .padding(horizontal = 16.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 12.dp),
+                .padding(top = 14.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Orqaga", tint = TextPrimary)
+            GlassCircleIconButton(onClick = onBack, size = 40.dp) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Orqaga", tint = TextPrimary, modifier = Modifier.size(20.dp))
             }
+            Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = group?.name ?: "Guruh",
                     color = TextPrimary,
-                    fontSize = 20.sp,
+                    fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = "${tracks.size} ta qo‘shiq • Izolyatsiyalangan ijro",
-                    color = AccentGreen,
+                    color = NeonCyan,
                     fontSize = 12.sp
                 )
             }
-            IconButton(onClick = { showAddTracksDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Qo‘shiq qo‘shish", tint = AccentGreen)
+            GlassCircleIconButton(
+                onClick = { showAddTracksDialog = true },
+                size = 42.dp,
+                isGlowing = true,
+                glowColor = NeonCyan
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Qo‘shiq qo‘shish", tint = TextPrimary, modifier = Modifier.size(22.dp))
             }
         }
 
-        // Oxirgi eshitilgan joydan davom ettirish banneri
         val lastUri = group?.lastPlayedTrackUri
         val lastIndex = tracks.indexOfFirst { it.uri == lastUri }
         if (lastIndex >= 0 && group != null) {
             val lastTrack = tracks[lastIndex]
-            Surface(
-                color = SurfaceElevated,
-                shape = RoundedCornerShape(14.dp),
+            GlassCard(
+                cornerRadius = 18.dp,
+                isHighlighted = true,
+                accentColor = NeonCyan,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 10.dp)
-                    .clickable {
-                        viewModel.playGroupTracks(
-                            groupId = groupId,
-                            groupName = group!!.name,
-                            tracks = tracks,
-                            startIndex = lastIndex,
-                            startPositionMs = group!!.lastPlayedPositionMs
-                        )
-                    }
+                    .padding(bottom = 12.dp),
+                onClick = {
+                    viewModel.playGroupTracks(
+                        groupId = groupId,
+                        groupName = group!!.name,
+                        tracks = tracks,
+                        startIndex = lastIndex,
+                        startPositionMs = group!!.lastPlayedPositionMs
+                    )
+                }
             ) {
                 Row(
-                    modifier = Modifier.padding(12.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.History, contentDescription = null, tint = AccentGreen)
+                    Icon(Icons.Default.History, contentDescription = null, tint = NeonCyan)
                     Spacer(modifier = Modifier.width(10.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Oxirgi joydan davom ettirish",
-                            color = AccentGreen,
+                            color = NeonCyan,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -367,7 +414,7 @@ private fun GroupDetailScreen(
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                    Icon(Icons.Default.PlayArrow, contentDescription = "Davom ettirish", tint = AccentGreen)
+                    Icon(Icons.Default.PlayArrow, contentDescription = "Davom ettirish", tint = TextPrimary)
                 }
             }
         }
@@ -381,42 +428,34 @@ private fun GroupDetailScreen(
                 )
             }
         } else {
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 itemsIndexed(tracks, key = { _, t -> t.uri }) { index, track ->
                     val isCurrent = playbackState.activeGroupId == groupId &&
                         playbackState.currentTrack?.uri == track.uri
-                    Surface(
-                        color = if (isCurrent) SurfaceElevated else SurfaceDark,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                viewModel.playGroupTracks(
-                                    groupId = groupId,
-                                    groupName = group?.name ?: "Guruh",
-                                    tracks = tracks,
-                                    startIndex = index
-                                )
-                            }
+                    GlassCard(
+                        cornerRadius = 16.dp,
+                        isHighlighted = isCurrent,
+                        accentColor = NeonCyan,
+                        onClick = {
+                            viewModel.playGroupTracks(
+                                groupId = groupId,
+                                groupName = group?.name ?: "Guruh",
+                                tracks = tracks,
+                                startIndex = index
+                            )
+                        }
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                                .padding(horizontal = 14.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            TrackCoverThumbnail(
-                                trackUri = track.uri,
-                                modifier = Modifier.size(48.dp),
-                                accentColor = AccentGreen,
-                                surfaceColor = SurfaceElevated
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = track.title,
-                                    color = if (isCurrent) AccentGreen else TextPrimary,
-                                    fontWeight = FontWeight.Medium,
+                                    color = if (isCurrent) NeonCyan else TextPrimary,
+                                    fontWeight = FontWeight.SemiBold,
                                     fontSize = 15.sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis
@@ -430,7 +469,6 @@ private fun GroupDetailScreen(
                                 )
                             }
 
-                            // Ketma-ketlikni yuqoriga/pastga o‘zgartirish
                             if (index > 0) {
                                 IconButton(
                                     onClick = {
@@ -466,7 +504,7 @@ private fun GroupDetailScreen(
                         }
                     }
                 }
-                item { Spacer(modifier = Modifier.height(80.dp)) }
+                item { Spacer(modifier = Modifier.height(100.dp)) }
             }
         }
     }
@@ -511,7 +549,7 @@ private fun GroupDetailScreen(
                                     onCheckedChange = {
                                         if (it) selectedUris.add(track.uri) else selectedUris.remove(track.uri)
                                     },
-                                    colors = CheckboxDefaults.colors(checkedColor = AccentGreen)
+                                    colors = CheckboxDefaults.colors(checkedColor = NeonCyan)
                                 )
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(track.title, color = TextPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -527,7 +565,7 @@ private fun GroupDetailScreen(
                     viewModel.addTracksToGroup(groupId, selectedUris.toList())
                     showAddTracksDialog = false
                 }) {
-                    Text("Qo‘shish (${selectedUris.size})", color = AccentGreen)
+                    Text("Qo‘shish (${selectedUris.size})", color = NeonCyan)
                 }
             },
             dismissButton = {
