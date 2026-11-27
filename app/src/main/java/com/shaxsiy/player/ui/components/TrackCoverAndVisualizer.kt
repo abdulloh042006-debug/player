@@ -35,6 +35,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.Image as ImageIcon
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -518,7 +519,7 @@ fun TrackCoverVisualizerSection(
                         modifier = Modifier.size(38.dp)
                     ) {
                         Icon(
-                            imageVector = if (coverBitmap != null) Icons.Default.Edit else Icons.Default.Image,
+                            imageVector = if (coverBitmap != null) Icons.Default.Edit else ImageIcon,
                             contentDescription = "Rasmni tahrirlash",
                             tint = accentColor,
                             modifier = Modifier.size(20.dp)
@@ -599,7 +600,7 @@ fun TrackCoverVisualizerSection(
                             modifier = Modifier.padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Default.Image, contentDescription = null, tint = accentColor)
+                            Icon(ImageIcon, contentDescription = null, tint = accentColor)
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
                                 text = if (hasCover) "Galereyadan boshqa rasm tanlash" else "Galereyadan rasm tanlash",
